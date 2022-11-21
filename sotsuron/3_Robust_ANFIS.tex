@@ -1,0 +1,122 @@
+\documentclass{ujarticle}
+\usepackage{sotsuron}
+\pagestyle{myheadings}
+\twocolumn
+\begin{document}
+\section{ノイズファジィクラスタリングによるロバストなANFIS分類器}
+
+本論文では，ノイズファジィクラスタリングの概念に基づいた多クラス分類のための新しいロバストなANFISモデルを提案する．
+分類器設計の目的は，教師クラスラベルを出来る限り正確に予測することであるが，実際の適用において全個体に正しいラベルを割り当てることは，しばしば困難であったりコストがかかる．
+若しくは，ノイズを含む信頼のできない教師ラベルをもつこともある．
+このようにノイズの多い場合，分類器を教師クラスラベルが信頼できないノイズ個体の影響を無視するように構築する必要がある．
+本論文では，ノイズファジィクラスタリングの概念を導入することにより，ANFISによる分類器をノイズラベルに対してロバスト化する新しいアプローチを提案する．
+
+\subsection{目的関数}
+
+各個体の非ノイズ度を推定するため，提案法では，ノイズクラスタリング基準としてANFISの目的関数を利用し，以下に示すようなハイブリッドな目的関数を用いる．
+%
+\begin{equation}
+	J_{ranfis} = \sum_{i=1}^n \left( (1-u_i)^\theta \gamma + u_i^\theta \sum_{c=1}^C (y_{ic} - \hat{y}_{ic})^2 \right)
+\end{equation}
+%
+$u_i$は，個体$i$の非ノイズ度を表し，$u_i \in [0, 1]$の条件をもつ．
+$u_i=1$と$u_i=0$は，それぞれ完全に非ノイズ個体・ノイズ個体であることを示している．
+$\theta$は，FCM法と同様，ファジィ度であり，$\theta > 1$の値をとる．
+また，$\theta$の値が大きいほど，ファジィなメンバシップ値となる．
+$\gamma$は，ノイズ感度の重みであり，$\gamma$の値が小さいほど，多数の信頼できない個体が除去される．
+すなわち，基準$\sum_{c=1}^C (y_{ic} - \hat{y}_{ic})^2$が，$\gamma$より大きければ，個体$i$はANFISのモデル推定から除去される．
+
+\subsection{前提部パラメータの更新}
+
+Layer 1の前提部パラメータ$\phi_{kj} \in \{ a_{kj}, b_{kj}, c_{kj} \}$は，各入力$(\bmath{x}_i, \bmath{y}_i)$に対して以下のような逆誤差伝播学習における勾配降下法に基づいて更新される．
+%
+\begin{equation}
+	\phi_{kj} \leftarrow \phi_{kj} - \tau \frac{\partial d_i}{\partial \phi_{kj}}
+\label{eq: premise parameters learning}
+\end{equation}
+%
+$\tau$は学習率であり，$d_i$は，次のように求められる個体ごとのコストである．
+%
+\begin{equation}
+	d_i = \sum_{c=1}^C (y_{ic} - \hat{y}_{ic})^2
+\end{equation}
+%
+連鎖律の下で，$\frac{\partial d_i}{\partial \phi_{kj}}$は，次のように分解される．
+%
+\begin{equation}
+\begin{aligned}[b]
+\frac{\partial d_{i}}{\partial \phi_{k j}} &=\sum_{t=1}^{K} \frac{\partial d_{i}}{\partial \bar{w}_{t i}} \frac{\partial \bar{w}_{t i}}{\partial w_{k i}} \frac{\partial w_{k i}}{\partial \mu_{k j}\left(x_{i j}\right)} \frac{\partial \mu_{k j}\left(x_{i j}\right)}{\partial \phi_{k j}} \\
+&=\frac{\partial w_{k i}}{\partial \mu_{k j}\left(x_{i j}\right)} \frac{\partial \mu_{k j}\left(x_{i j}\right)}{\partial \phi_{k j}} \sum_{t=1}^{K} \frac{\partial d_{i}}{\partial \bar{w}_{t i}} \frac{\partial \bar{w}_{t i}}{\partial w_{k i}}
+\end{aligned}
+\end{equation}
+%
+ここで，新しく導入されたパラメータ$u_i$は，$\frac{\partial d_i}{\partial \bar{w}_{ti}}$についてしか関係がない．
+%
+\begin{equation}
+\begin{aligned}[b]
+\frac{\partial d_{i}}{\partial \bar{w}_{t i}} &=\frac{\partial}{\partial \bar{w}_{t i}}\left(u_{i}^{\theta} \sum_{c=1}^{C}\left(y_{i c}-\hat{y}_{i c}\right)^{2}\right) \\
+&=\frac{\partial}{\partial \bar{w}_{k i}}\left(u_{i}^{\theta} \sum_{c=1}^{C}\left(y_{i c}-\sum_{s=1}^{K} \bar{w}_{s i} r_{s}^{c}\right)^{2}\right) \\
+&=-2 u_{i}^{\theta} \sum_{c=1}^{C}\left(y_{i c}-\sum_{s=1}^{K} \bar{w}_{s i} r_{s}^{c}\right)
+\end{aligned}
+\end{equation}
+%
+他の要素は，従来のANFISと同じ方法で計算される．
+
+\subsection{結論部パラメータの更新}
+
+Layer 4では，結論部パラメータ$\bmath{r}_c = (r_{1}^c, \dots, r_{K}^c)^\top$が，最小二乗推定に基づいて更新され，目的関数は，以下のように変形される．
+%
+\begin{equation}
+\begin{aligned}[b]
+J_{ranfis} &=\sum_{i=1}^{n}\left(\left(1-u_{i}\right)^{\theta} \gamma+u_{i}^{\theta} \sum_{c=1}^{C}\left(y_{i c}-\hat{y}_{i c}\right)^{2}\right) \\
+&=\sum_{c=1}^{C} \sum_{i=1}^{n} u_{i}^{\theta}\left(y_{i c}-\sum_{k=1}^{K} \bar{w}_{k i} r_{k}^{c}\right)^{2} \\
+& \hspace{30mm} +\sum_{i=1}^{n}\left(1-u_{i}\right)^{\theta} \gamma \\
+&=\sum_{c=1}^{C}\left(\tilde{\bmath{y}}_{c}-W \bmath{r}_{c}\right)^{\top} U\left(\tilde{\boldsymbol{y}}_{c}-W \bmath{r}_{c}\right) \\
+& \hspace{30mm} +\sum_{i=1}^{n}\left(1-u_{i}\right)^{\theta} \gamma
+\end{aligned}
+\end{equation}
+%
+$\tilde{\bmath{y}}_c$は，$n$次元ベクトル$\tilde{\bmath{y}}_c=(y_{1c}, \dots, y_{nc})^\top$である．
+$W$は，$n \times K$行列$W=\{ \bar{w}_{ik} \}$であり，$U$は，$i$番目の対角要素が$u_i^\theta$の$n \times n$対角行列である．
+$\bmath{r}_c$は，以下のように更新される．
+%
+\begin{equation}
+  \bmath{r}_c = (W^\top U W)^{-1} W^\top U \tilde{\bmath{y}}_c
+\label{eq: LSE of coefficient vector}
+\end{equation}
+%
+
+\subsection{ファジィメンバシップ更新}
+
+非ノイズメンバシップ度$u_i$は，単一クラスタのノイズクラスタリングの概念に基づいて次のように更新される．
+%
+\begin{equation}
+  u_{i} = \left( 1 + \left( \frac{d_i}{\gamma} \right)^{\frac{1}{\theta-1}} \right)^{-1}
+\label{eq: non-noise membership calculation}
+\end{equation}
+%
+
+\subsection{アルゴリズム}
+
+上記の更新則に従い，提案法の手順を以下のサンプルアルゴリズムにまとめた．
+
+\vspace{5mm}
+\noindent
+\textbf{[A Robust ANFIS Classifier Based on Noise Fuzzy Clustering]}
+
+\begin{description}
+	\item[Step 1.] ファジィ度$\theta$，ノイズ感度$\gamma$，ルール数$K$，学習率$\tau$，終了基準$\varepsilon$を設定する．
+	\item[Step 2.] FCM法を実行し，初期前提部パラメータを推定する．
+	\item[Step 3.] 提案法のロバスト化ANFIS分類器のパラメータを，更新則が収束するまで実行することにより推定する．
+	\begin{description}
+		\item[Step 3-1.] 非ノイズメンバシップ$u_{i}$をすべて$u_{i}=1$, $i=1, \dots, n$と初期化する．
+		\item[Step 3-2.] 結論部パラメータ$\bmath{r}_c$を(\ref{eq: LSE of coefficient vector})式により更新する．
+		\item[Step 3-3.] (\ref{eq: premise parameters learning})式の勾配降下法により，前提部パラメータ$\phi_{kj} \in \{ a_{kj}, b_{kj}, c_{kj} \}$を更新する．
+		\item[Step 3-4.] 非ノイズ度$u_{i}$, $i=1, \dots, n$を(\ref{eq: non-noise membership calculation})式により更新する．
+		\item[Step 3-5.] $ J_{ranfis}^{OLD} - J_{ranfis}^{NEW} < 0$であれば終了する
+    ．そうでなければ，\textbf{Step 3-2}に戻る．
+	\end{description}
+
+\end{description}
+
+\end{document}

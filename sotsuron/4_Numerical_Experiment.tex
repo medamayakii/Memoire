@@ -1,0 +1,107 @@
+\documentclass{ujarticle}
+\usepackage{sotsuron}
+\pagestyle{myheadings}
+\twocolumn
+\begin{document}
+\section{数値実験}
+\subsection{実験方法}
+
+UCI Machine Learning Repository~\cite{UCI_repository2019}から入手可能なIrisデータを用いて数値実験を行った．Iris-setosa，Iris-versicolor，Iris-virginicaの3種類のクラス($C=3$)それぞれ50サンプルずつから構成され，計150個体から構成されている．
+また，各個体は，4次元の特徴量($m=4$)で表現されている．
+ANFISによる分類器の分類性能を調べるため，Irisデータセットを3つのクラスからそれぞれ40個体をランダムに選択した120個体（$n=120$）からなる訓練データと，残りの30個体からなるテストデータに分割した．
+ANFISによる分類器を訓練データによって構築し，その汎化性能をテストデータによって評価した．
+
+提案法におけるノイズロバスト性は，以下のように調べた．
+訓練データの一部のクラスラベルをランダムに変更し，そのノイズの多い訓練データを用いてANFISによる分類器を構築した．
+本実験では，10\%(12ノイズ個体)，20\%(24ノイズ個体)，30\%(36ノイズ個体)，40\%(48ノイズ個体)，50\%(60ノイズ個体)の5種類のノイズ比率を用いた．
+また，テストデータには元のラベルをそのまま利用しており，ノイズを含んでいない．
+
+ANFIS分類器は，3種類のクラスをもっているため，ルール数$K=3$として分類器の出力:
+\[f_c^k, \quad c=1,2,3, \quad k=1,2,3,\]
+となるよう構築した．
+クラス数$C$は，ルール数$K$と対応することが理想的である．
+ファジィ度と学習率は，それぞれ$\theta = 2$，$\tau = 0.00001$と設定した．
+
+\subsection{分類性能の比較}
+
+ノイズを含まない元の訓練データとノイズを含む訓練データに対して，従来法のANFIS分類器と提案法のANFIS分類器を構築した．
+その分類性能を，訓練データでは表\ref{tab: classification ratios for training}，テストデータでは表\ref{tab: classification ratios for test}に示した．
+
+\begin{table*}[!htbp]
+\caption{訓練データに対する分類性能の比較}
+\label{tab: classification ratios for training}
+\centering
+{\tabcolsep = 2.5mm
+\begin{tabular}{c||c|c|c|c|c|c}\hline%\cline{3-11}
+ノイズ比率	& original& 10\% & 20\%	& 30\% 	& 40\% & 50\%    \\\hline\hline
+従来法	& 96.7\% & 86.7\% & 76.7\% & 70.8\% & 58.3\% & 48.3\%    \\\hline
+提案法 & 97.5\% & 86.7\% & 76.7\% & 67.5\% & 59.2\% & 51.7\%	 \\\hline
+\end{tabular}
+}
+\end{table*}
+
+表\ref{tab: classification ratios for training}から従来法と提案法のANFISモデルは，どちらも訓練データにノイズラベルを含まない場合，高い分類性能を達成している．
+また，データセットにノイズラベルを含む場合，
+\[(分類性能)\approx 100\%-(ノイズ比率)\]
+によって分類性能を考えることができる．そのため，ノイズを含んでいたとしても非ノイズ個体に対しては，どちらのモデルにおいてもほぼ完璧な分類性能を達成している．
+
+\begin{table*}[!htbp]
+\caption{テストデータに対する分類性能の比較}
+\label{tab: classification ratios for test}
+\centering
+{\tabcolsep = 2.5mm
+\begin{tabular}{c||c|c|c|c|c|c}\hline%\cline{3-11}
+ノイズ比率	& original& 10\% & 20\%	& 30\% 	& 40\% & 50\%    \\\hline\hline
+従来法 & 100.0\% & 96.7\% & 96.7\% & 90.0\% & 86.7\% & 76.7\%    \\\hline
+提案法 & 100.0\% & 100.0\% & 96.7\% & 93.3\% & 90.0\% & 86.7\%	 \\\hline
+\end{tabular}
+}
+\end{table*}
+
+一方テストデータに対しては，表\ref{tab: classification ratios for test}に示したように，そのデータにノイズを含まないにも関わらず，従来法と提案法のANFISによる分類器の汎化性能が低下している．
+これは，訓練データのノイズラベルに分類器が過適合し，非ノイズ個体の分類に失敗することがあるためである．
+
+提案法では，テストデータに対する汎化性能を従来法より向上させることに成功した．
+すなわち，従来法においては，誤ったラベルをもつノイズ個体の影響によって汎化性能が低下したが，提案法においては，ノイズ個体を適切に識別し分類器の構築においてその影響を除去できている．
+
+\subsection{メンバシップ関数の比較}
+
+ここでは，従来法と提案法によるANFISから得られたファジィメンバシップ関数を比較する．
+図\ref{fig: membership of conventional ANFIS}と図\ref{fig: membership of proposed robust ANFIS}では，4つの変量$(x_1, \dots, x_4)$についてのルールごとのメンバシップ関数$\mu_{kj} (x_{j})$を，ノイズなしの元の訓練データと50\%のノイズラベルを含む訓練データで比較している．
+
+いずれの手法においても，ノイズのないデータでは，なめらかなメンバシップ関数を構築することができたが，従来法のモデルでは，データセットにノイズを含むとき属性$x_1$のルール2において，尖った形状の関数が得られた．
+このような尖った形状は，何らかのノイズ個体に対して過適合を起こしうる．
+対して提案法では，訓練データにノイズラベルが含まれている場合でも変わらず，なめらかなメンバシップ関数を構築している．
+このノイズに強い特徴は，ANFISによる分類器のノイズが多いデータセットへの汎化性能の向上に役立つと考えられる．
+
+\begin{figure*}[!htb]
+  \begin{minipage}{0.45\hsize}
+    \centering
+    \includegraphics[width=\textwidth]{Final_mf_anfis_00.png}
+    \subcaption{original (ノイズなし)}
+  \end{minipage}
+  \begin{minipage}{0.45\hsize}
+    \centering
+    \includegraphics[width=\textwidth]{Final_mf_anfis_50.png}
+    \subcaption{ノイズ 50$\%$}
+  \end{minipage}
+  \caption{従来法ANFISのファジィメンバシップ関数．}
+  \label{fig: membership of conventional ANFIS}
+\end{figure*}
+
+\begin{figure*}[!htb]
+  \begin{minipage}{0.45\hsize}
+    \centering
+    \includegraphics[width=\textwidth]{Final_mf_noise_00.png}
+    \subcaption{original (ノイズなし)}
+  \end{minipage}
+  \begin{minipage}{0.45\hsize}
+    \centering
+    \includegraphics[width=\textwidth]{Final_mf_noise_50.png}
+    \subcaption{ノイズ 50$\%$}
+  \end{minipage}
+  \caption{提案法ANFISのファジィメンバシップ関数．}
+  \label{fig: membership of proposed robust ANFIS}
+\end{figure*}
+
+\end{document}

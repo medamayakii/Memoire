@@ -1,0 +1,74 @@
+\RequirePackage[dvipdfmx]{graphicx}
+\RequirePackage{amsmath,amssymb}				%数式の取り込み
+\RequirePackage{float}
+%\RequirePackage{subfigure}
+%\RequirePackage{multirow}
+\RequirePackage{url}
+\RequirePackage{comment}
+\RequirePackage{fancybox}
+\RequirePackage{subcaption}
+
+\setlength{\oddsidemargin}{4mm}  %
+\setlength{\evensidemargin}{4mm}  %
+\setlength{\textheight}{237mm}    %
+\setlength{\textwidth}{160mm}     %
+\setlength{\topmargin}{-5.4mm}       %
+\setlength{\headsep}{5mm}
+\setlength{\headheight}{5mm}         %
+\setlength{\columnsep}{6mm}      % 二段組の中央余白
+
+
+%\setlength{\subfigtopskip}{0.5mm}
+%\setlength{\subfigcapskip}{-0.7mm}
+%\setlength{\belowcaptionskip}{-1mm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% New Command and Environment
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% boldmath define
+\newcommand{\vctr}[1]{\mbox{\boldmath $#1$}}
+\newcommand{\bmath}[1]{\mbox{\boldmath $#1$}}
+\newcommand{\blm}[1]{\mbox{\boldmath $#1$}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% set number of float %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\renewcommand{\topfraction}{1.0}         %図で１００％埋めてもよし
+\renewcommand{\bottomfraction}{1.0}         %図で１００％埋めてもよし
+\renewcommand{\textfraction}{0.0}        %文章が０％でもよし
+\renewcommand{\floatpagefraction}{ 0.0}  %文章が０％でもよし
+\setlength{\floatsep}{3mm}               %フロートと文章の間０ミリ
+\setcounter{page}{1}
+\setcounter{totalnumber}{10}             %１ページのフロート数
+\setcounter{topnumber}{5}                %１ページのフロート数
+\setcounter{bottomnumber}{5}             %１ページのフロート数
+\markboth{}{}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%  set margin for fleqn.sty%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\setlength{\mathindent}{2mm}      %数式を左から３ミリ %0mm→3mm
+%\setlength{\topsep}{3mm}          %文章と式の上下幅３ミリ
+%\setlength{\jot}{3mm}             %数式間３ミリ
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  layout about float
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setlength{\floatsep}{1mm}      %図間，表間，図表間を1ミリ
+\setlength{\textfloatsep}{5mm}  %文章と図を1ミリ
+
+%%%%%%%%%%%%%%%% Step Counter %%%%%%%%%%%%%%%%%%%%%%%
+\newcounter{mycounti}
+\newcounter{mycountii}[mycounti]
+\newenvironment{steplist}{%
+\def\themycountii{\themycounti.\arabic{mycountii}}
+\def\step{%
+\refstepcounter{mycounti}\item[\it Step \themycounti:]}%
+\def\skipstep{\stepcounter{mycounti}}
+\def\substep{%
+\refstepcounter{mycountii}\item[\it Step \themycountii:]}%
+\begin{list}{}{\setlength{\leftmargin}{16mm}
+\setlength{\labelsep}{1em}
+\setlength{\labelwidth}{\leftmargin}
+\addtolength{\labelwidth}{-\labelsep}}
+}{\end{list}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
